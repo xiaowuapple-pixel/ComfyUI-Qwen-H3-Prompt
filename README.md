@@ -13,6 +13,7 @@
 - 在线 OpenAI 兼容 `chat/completions` API，模型可自动从 `/models` 获取
 - 自动判别、文生视频、图生视频、首尾帧、尾帧和多参考生成
 - 使用随仓库附带的 MiniMax 官方 skills 本地副本，不运行时联网
+- 可选择生成后卸载本地模型（默认开启）
 - 3D 动画、品牌宣传、产品广告、音乐字幕、纸艺科普等创意技能
 
 ### 安装与使用
@@ -36,6 +37,7 @@ text-to-video mode, generation-type selection, creative skill selection, and Eng
 - OpenAI-compatible `chat/completions` API with automatic `/models` discovery
 - Auto, text-to-video, image-to-video, first/last-frame, last-frame, and multi-reference modes
 - Vendored MiniMax official skills are used locally; no runtime network synchronization
+- Optional model unload after generation (enabled by default)
 - Creative skills for 3D shorts, brand ads, product ads, music subtitles, and paper-craft explainers
 
 ### Installation

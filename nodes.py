@@ -576,6 +576,7 @@ class Qwen36MultiImageH3ChinesePrompt:
                     ],
                     {"default": "自动判别"},
                 ),
+                "生成后卸载模型": ("BOOLEAN", {"default": True}),
             },
             "optional": {f"图片_{index}": ("IMAGE",) for index in range(1, 10)},
         }
@@ -610,6 +611,7 @@ class Qwen36MultiImageH3ChinesePrompt:
         )
         creative_skill = inputs.get("创意技能", "自动判别")
         creative_instruction = _official_skill_instruction(creative_skill)
+        unload_after_generation = bool(inputs.get("生成后卸载模型", True))
         output_chinese = bool(inputs.get("输出中文提示词", False))
         language_instruction = (
             "输出必须使用简体中文（官方字段名和格式标记保持不变）。"
@@ -742,7 +744,7 @@ class Qwen36MultiImageH3ChinesePrompt:
                 print("[H3 中文提示词] 质量检查提示：" + "；".join(errors))
             return (prompt,)
         finally:
-            if source == "本地 GGUF":
+            if source == "本地 GGUF" and unload_after_generation:
                 _VisionRuntime.close()
 
 
