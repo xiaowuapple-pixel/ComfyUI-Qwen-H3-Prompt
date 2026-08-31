@@ -3,7 +3,10 @@ name = "comfyui-qwen-h3-prompt"
 version = "1.0.0"
 description = "Selectable GGUF and mmproj multi-image Chinese MiniMax H3 prompt writer for ComfyUI"
 requires-python = ">=3.10"
-dependencies = ["llama-cpp-python>=0.3.46", "Pillow", "numpy"]
+dependencies = ["Pillow", "numpy"]
+
+[project.optional-dependencies]
+local-gguf = ["llama-cpp-python>=0.3.46"]
 
 [tool.comfy]
 PublisherId = "local"

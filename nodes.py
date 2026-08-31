@@ -12,14 +12,20 @@ from PIL import Image
 
 import comfy.model_management as mm
 import folder_paths
-from llama_cpp import Llama
-from llama_cpp.llama_chat_format import (
-    Gemma3ChatHandler,
-    Gemma4ChatHandler,
-    MTMDChatHandler,
-    Qwen35ChatHandler,
-    Qwen3VLChatHandler,
-)
+try:
+    from llama_cpp import Llama
+    from llama_cpp.llama_chat_format import (
+        Gemma3ChatHandler,
+        Gemma4ChatHandler,
+        MTMDChatHandler,
+        Qwen35ChatHandler,
+        Qwen3VLChatHandler,
+    )
+    _LLAMA_CPP_IMPORT_ERROR = None
+except ImportError as exc:
+    # Online API mode and node registration do not require llama-cpp-python.
+    Llama = None
+    _LLAMA_CPP_IMPORT_ERROR = exc
 
 
 SECTION_NAMES = (
@@ -184,6 +190,11 @@ def _vision_models():
 
 
 def _create_chat_handler(model_name, mmproj_path):
+    if _LLAMA_CPP_IMPORT_ERROR is not None:
+        raise RuntimeError(
+            "本地 GGUF 模式需要安装 llama-cpp-python>=0.3.46；"
+            "在线 OpenAI 兼容 API 模式无需此依赖。"
+        ) from _LLAMA_CPP_IMPORT_ERROR
     name = Path(model_name).name.lower()
     common = {
         "clip_model_path": str(mmproj_path),
@@ -208,6 +219,11 @@ class _VisionRuntime:
 
     @classmethod
     def load(cls, model_relative_path, vision_relative_path, gpu_layers):
+        if _LLAMA_CPP_IMPORT_ERROR is not None:
+            raise RuntimeError(
+                "本地 GGUF 模式需要安装 llama-cpp-python>=0.3.46；"
+                "在线 OpenAI 兼容 API 模式无需此依赖。"
+            ) from _LLAMA_CPP_IMPORT_ERROR
         cls.close()
         mm.unload_all_models()
         model_path = _resolve_llm_path(model_relative_path)

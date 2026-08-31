@@ -18,7 +18,8 @@
 
 ### 安装与使用
 
-将仓库目录放入 `ComfyUI/custom_nodes/`，安装 `llama-cpp-python` 及其依赖后重启 ComfyUI。
+将仓库目录放入 `ComfyUI/custom_nodes/` 后重启 ComfyUI。在线 API 模式无需安装 `llama-cpp-python`；
+只有使用本地 GGUF 时才需要安装 `llama-cpp-python>=0.3.46`。
 在节点中选择模型、生成类型和创意技能；无图且选择“自动判别”时会自动采用文生视频方式。
 GPU 卸载层数默认为 `-1`，表示全部放入显存；显存不足时可改为 16-24。
 
@@ -42,8 +43,8 @@ text-to-video mode, generation-type selection, creative skill selection, and Eng
 
 ### Installation
 
-Place this folder under `ComfyUI/custom_nodes/`, install `llama-cpp-python` and dependencies,
-then restart ComfyUI. Select the models, generation type, and creative skill in the node.
+Place this folder under `ComfyUI/custom_nodes/` and restart ComfyUI. Online API mode does not require
+`llama-cpp-python`; install `llama-cpp-python>=0.3.46` only when using local GGUF models.
 With no image connected and generation type set to Auto, the node automatically uses text-to-video.
 
 For online mode, the endpoint must support OpenAI multimodal messages. API keys are used only at
