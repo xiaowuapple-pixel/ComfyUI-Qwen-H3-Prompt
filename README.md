@@ -19,7 +19,7 @@
 
 将仓库目录放入 `ComfyUI/custom_nodes/`，安装 `llama-cpp-python` 及其依赖后重启 ComfyUI。
 在节点中选择模型、生成类型和创意技能；无图且选择“自动判别”时会自动采用文生视频方式。
-16GB 显存建议从 16-24 个 GPU 卸载层开始，`-1` 表示全部放入显存。
+GPU 卸载层数默认为 `-1`，表示全部放入显存；显存不足时可改为 16-24。
 
 在线模式要求服务支持 OpenAI 多模态消息格式；API Key 只在节点运行时使用，不写入文件。
 
@@ -32,7 +32,7 @@ text-to-video mode, generation-type selection, creative skill selection, and Eng
 ### Features
 
 - Scans local `models/LLM` plus paths registered in `extra_model_paths.yaml`
-- Local GGUF + `mmproj` vision inference with configurable GPU offload layers
+- Local GGUF + `mmproj` vision inference with configurable GPU offload layers (default: `-1`, all layers on GPU)
 - OpenAI-compatible `chat/completions` API with automatic `/models` discovery
 - Auto, text-to-video, image-to-video, first/last-frame, last-frame, and multi-reference modes
 - Vendored MiniMax official skills are used locally; no runtime network synchronization

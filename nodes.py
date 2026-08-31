@@ -526,7 +526,7 @@ class Qwen36MultiImageH3ChinesePrompt:
                 "GPU卸载层数": (
                     "INT",
                     {
-                        "default": 24,
+                        "default": -1,
                         "min": -1,
                         "max": 256,
                         "step": 1,
