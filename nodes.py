@@ -134,7 +134,7 @@ def _official_skill_instruction(skill_name):
     folder = OFFICIAL_SKILL_PATHS.get(skill_name)
     if not folder:
         return CREATIVE_SKILL_INSTRUCTIONS.get(skill_name, CREATIVE_SKILL_INSTRUCTIONS["自动判别"])
-    skill_file = Path(__file__).parent / "official_skills" / "skills" / folder / "SKILL.md"
+    skill_file = Path(__file__).parent / "skills" / folder / "SKILL.md"
     try:
         text = skill_file.read_text(encoding="utf-8").strip()
         if text:
