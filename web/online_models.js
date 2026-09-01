@@ -1,7 +1,7 @@
 import { app } from "/scripts/app.js";
 import { api } from "/scripts/api.js";
 
-const NODE_NAME = "Qwen36MultiImageH3ChinesePrompt";
+const NODE_NAME = "H3Prompt";
 
 app.registerExtension({
     name: "QwenH3Prompt.OnlineModels",

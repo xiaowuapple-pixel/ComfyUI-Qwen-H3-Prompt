@@ -10,5 +10,5 @@ local-gguf = ["llama-cpp-python>=0.3.46"]
 
 [tool.comfy]
 PublisherId = "local"
-DisplayName = "多模型多图 H3 中文提示词"
+DisplayName = "H3 Prompt"
 Icon = ""

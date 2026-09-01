@@ -1,4 +1,4 @@
-# ComfyUI-Qwen-H3-Prompt
+# H3 Prompt
 
 ## 中文说明
 

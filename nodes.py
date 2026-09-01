@@ -785,9 +785,9 @@ class Qwen36MultiImageH3ChinesePrompt:
 
 
 NODE_CLASS_MAPPINGS = {
-    "Qwen36MultiImageH3ChinesePrompt": Qwen36MultiImageH3ChinesePrompt,
+    "H3Prompt": Qwen36MultiImageH3ChinesePrompt,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "Qwen36MultiImageH3ChinesePrompt": "Multi-Model Multi-Image H3 Prompt (1-9 Images)",
+    "H3Prompt": "H3 Prompt",
 }
