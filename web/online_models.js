@@ -11,6 +11,14 @@ app.registerExtension({
         const originalCreated = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function () {
             const result = originalCreated?.apply(this, arguments);
+            // Older workflows may carry the legacy Chinese image widgets as
+            // unknown fields. Remove those duplicates from the visible node;
+            // the Python executor still accepts their values for compatibility.
+            if (this.widgets) {
+                this.widgets = this.widgets.filter((widget) =>
+                    !/^图片_[1-9]$/.test(widget.name) && !/^Reference Image [1-9]$/.test(widget.name)
+                );
+            }
             const addressWidget = this.widgets?.find((widget) => widget.name === "Online Request URL");
             const keyWidget = this.widgets?.find((widget) => widget.name === "Online API Key");
             const modelWidget = this.widgets?.find((widget) => widget.name === "Online Model");

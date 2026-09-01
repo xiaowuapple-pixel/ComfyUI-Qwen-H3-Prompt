@@ -365,7 +365,7 @@ def _tensor_to_data_url(tensor, max_size=512):
 def _collect_images(inputs, allow_empty=False):
     images = []
     for index in range(1, 10):
-        tensor = inputs.get(f"Reference Image {index}", inputs.get(f"图片_{index}"))
+        tensor = inputs.get(f"Image {index}", inputs.get(f"Reference Image {index}", inputs.get(f"图片_{index}")))
         if tensor is None:
             continue
         if tensor.ndim == 3:
@@ -609,7 +609,7 @@ class Qwen36MultiImageH3ChinesePrompt:
                 ),
                 "Unload Model After Generation": ("BOOLEAN", {"default": True}),
             },
-            "optional": {f"Reference Image {index}": ("IMAGE",) for index in range(1, 10)},
+            "optional": {f"Image {index}": ("IMAGE",) for index in range(1, 10)},
         }
 
     RETURN_TYPES = ("STRING",)
@@ -789,5 +789,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "Qwen36MultiImageH3ChinesePrompt": "多模型多图 H3 中文提示词（1-9图）",
+    "Qwen36MultiImageH3ChinesePrompt": "Multi-Model Multi-Image H3 Prompt (1-9 Images)",
 }
