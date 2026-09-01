@@ -150,6 +150,13 @@ def _official_skill_instruction(skill_name):
     return CREATIVE_SKILL_INSTRUCTIONS.get(skill_name, CREATIVE_SKILL_INSTRUCTIONS["自动判别"])
 
 
+def _is_online_source(value):
+    """Accept the new boolean switch and legacy saved string values."""
+    if isinstance(value, str):
+        return value.strip().lower() in {"online", "true", "1", "在线 openai 兼容 api", "在线llm"}
+    return bool(value)
+
+
 def _llm_directories():
     try:
         roots = folder_paths.get_folder_paths("LLM")
@@ -576,7 +583,7 @@ class Qwen36MultiImageH3ChinesePrompt:
                     ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"],
                     {"default": "16:9"},
                 ),
-                "模型来源": (["本地 GGUF", "在线 OpenAI 兼容 API"], {"default": "本地 GGUF"}),
+                "模型来源": ("BOOLEAN", {"default": False, "label_on": "线上 LLM", "label_off": "本地模型"}),
                 "在线请求地址": ("STRING", {"default": "https://api.openai.com/v1", "multiline": False}),
                 "在线APIKey": ("STRING", {"default": "", "multiline": False, "password": True}),
                 "在线模型": ("STRING", {"default": "", "multiline": False, "placeholder": "留空自动从 /models 选择第一个"}),
@@ -604,13 +611,13 @@ class Qwen36MultiImageH3ChinesePrompt:
     DESCRIPTION = "自行搭配 GGUF 语言模型和 mmproj 视觉模型，生成 MiniMax H3 中文提示词。"
 
     def 生成(self, **inputs):
-        source = inputs["模型来源"]
+        online_source = _is_online_source(inputs["模型来源"])
         model_name = inputs["语言模型"]
         vision_name = inputs["视觉模型"]
         gpu_layers = inputs["GPU卸载层数"]
         seed = inputs["种子"]
         generation_type = inputs.get("生成类型", "自动判别")
-        if source == "本地 GGUF" and (model_name == "未找到语言模型" or vision_name == "未找到视觉模型"):
+        if not online_source and (model_name == "未找到语言模型" or vision_name == "未找到视觉模型"):
             raise FileNotFoundError("请将 GGUF 语言模型和对应 mmproj 视觉模型放入 models/LLM。")
         images = _collect_images(inputs, allow_empty=generation_type in {"自动判别", "文生视频"})
         # With no reference image, automatic mode is a true text-to-video task.
@@ -657,7 +664,7 @@ class Qwen36MultiImageH3ChinesePrompt:
                 }
             )
 
-        if source == "在线 OpenAI 兼容 API":
+        if online_source:
             if not inputs["在线APIKey"].strip():
                 raise ValueError("在线模式必须填写 API Key。")
             llm = _OnlineRuntime(inputs["在线请求地址"], inputs["在线APIKey"], inputs["在线模型"])
@@ -760,7 +767,7 @@ class Qwen36MultiImageH3ChinesePrompt:
                 print("[H3 中文提示词] 质量检查提示：" + "；".join(errors))
             return (prompt,)
         finally:
-            if source == "本地 GGUF" and unload_after_generation:
+            if not online_source and unload_after_generation:
                 _VisionRuntime.close()
 
 

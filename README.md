@@ -12,6 +12,7 @@
 - 本地 GGUF + `mmproj` 视觉模型推理，支持 GPU 卸载层数
 - 在线 OpenAI 兼容 `chat/completions` API，模型可自动从 `/models` 获取
 - 在线模型刷新按钮与模型下拉选择，无需手动输入模型名
+- “模型来源”使用开关切换：关闭为本地模型，开启为线上 LLM
 - 自动判别、文生视频、图生视频、首尾帧、尾帧和多参考生成
 - 使用随仓库附带的 MiniMax 官方 skills 本地副本，不运行时联网
 - 可选择生成后卸载本地模型（默认开启）
@@ -38,6 +39,7 @@ text-to-video mode, generation-type selection, creative skill selection, and Eng
 - Local GGUF + `mmproj` vision inference with configurable GPU offload layers (default: `-1`, all layers on GPU)
 - OpenAI-compatible `chat/completions` API with automatic `/models` discovery
 - Refresh button and dropdown selection for hosted models; no manual model-name entry required
+- A simple source switch selects local models (off) or hosted LLM (on)
 - Auto, text-to-video, image-to-video, first/last-frame, last-frame, and multi-reference modes
 - Vendored MiniMax official skills are used locally; no runtime network synchronization
 - Optional model unload after generation (enabled by default)
