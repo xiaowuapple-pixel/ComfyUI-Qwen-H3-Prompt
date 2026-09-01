@@ -25,10 +25,16 @@ app.registerExtension({
             if (!addressWidget || !keyWidget || !modelWidget) return result;
 
             const savedModel = modelWidget.value || "";
-            modelWidget.type = "combo";
-            modelWidget.options = modelWidget.options || {};
-            modelWidget.options.values = savedModel ? [savedModel] : ["请点击刷新在线模型"];
-            if (!savedModel) modelWidget.value = "";
+            const modelIndex = this.widgets.indexOf(modelWidget);
+            // Recreate the widget as a real combo. Changing `type` on an
+            // existing STRING widget does not change LiteGraph's renderer.
+            this.widgets.splice(modelIndex, 1);
+            const combo = this.addWidget("combo", "Online Model", savedModel, null, {
+                values: savedModel ? [savedModel] : [],
+            });
+            this.widgets.splice(this.widgets.indexOf(combo), 1);
+            this.widgets.splice(modelIndex, 0, combo);
+            const onlineModelWidget = combo;
 
             const refresh = this.addWidget("button", "Refresh Online Models", null, async () => {
                 const oldLabel = refresh.name;
@@ -45,8 +51,8 @@ app.registerExtension({
                     });
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
-                    modelWidget.options.values = data.models;
-                    if (!data.models.includes(modelWidget.value)) modelWidget.value = data.models[0];
+                    onlineModelWidget.options.values = data.models;
+                    if (!data.models.includes(onlineModelWidget.value)) onlineModelWidget.value = data.models[0];
                     refresh.name = `Refresh Online Models (${data.models.length})`;
                 } catch (error) {
                     refresh.name = oldLabel;
@@ -56,7 +62,6 @@ app.registerExtension({
             });
 
             const refreshIndex = this.widgets.indexOf(refresh);
-            const modelIndex = this.widgets.indexOf(modelWidget);
             if (refreshIndex > modelIndex + 1) {
                 this.widgets.splice(refreshIndex, 1);
                 this.widgets.splice(modelIndex + 1, 0, refresh);
