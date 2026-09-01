@@ -20,8 +20,20 @@
 
 ### 安装与使用
 
-将仓库目录放入 `ComfyUI/custom_nodes/` 后重启 ComfyUI。在线 API 模式无需安装 `llama-cpp-python`；
-只有使用本地 GGUF 时才需要安装 `llama-cpp-python>=0.3.46`。
+将仓库目录放入 `ComfyUI/custom_nodes/` 后重启 ComfyUI。依赖文件说明：
+
+- `requirements.txt`：基础依赖，在线 API 模式必须安装
+- `requirements-local-gguf.txt`：可选依赖，只有使用本地 GGUF 时安装
+
+在 ComfyUI 使用的 Python 环境中执行：
+
+```bash
+pip install -r requirements.txt
+# 本地 GGUF 模式额外安装（选择与你的 CUDA/GPU 匹配的构建）
+pip install -r requirements-local-gguf.txt
+```
+
+在线 API 模式无需安装 `llama-cpp-python`。
 在节点中选择模型、生成类型和创意技能；无图且选择“自动判别”时会自动采用文生视频方式。
 GPU 卸载层数默认为 `-1`，表示全部放入显存；显存不足时可改为 16-24。
 
@@ -47,8 +59,10 @@ text-to-video mode, generation-type selection, creative skill selection, and Eng
 
 ### Installation
 
-Place this folder under `ComfyUI/custom_nodes/` and restart ComfyUI. Online API mode does not require
-`llama-cpp-python`; install `llama-cpp-python>=0.3.46` only when using local GGUF models.
+Place this folder under `ComfyUI/custom_nodes/` and restart ComfyUI. Install the base dependencies
+from `requirements.txt`. For local GGUF inference, additionally install the optional dependencies
+from `requirements-local-gguf.txt` using a build compatible with your CUDA/GPU. Online API mode does
+not require `llama-cpp-python`.
 With no image connected and generation type set to Auto, the node automatically uses text-to-video.
 
 For online mode, the endpoint must support OpenAI multimodal messages. API keys are used only at
