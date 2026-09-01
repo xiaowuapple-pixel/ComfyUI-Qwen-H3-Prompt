@@ -30,7 +30,7 @@ app.registerExtension({
             modelWidget.options.values = savedModel ? [savedModel] : ["请点击刷新在线模型"];
             if (!savedModel) modelWidget.value = "";
 
-            const refresh = this.addWidget("button", "刷新在线模型", null, async () => {
+            const refresh = this.addWidget("button", "Refresh Online Models", null, async () => {
                 const oldLabel = refresh.name;
                 refresh.name = "正在获取模型...";
                 this.setDirtyCanvas(true, true);
@@ -47,7 +47,7 @@ app.registerExtension({
                     if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
                     modelWidget.options.values = data.models;
                     if (!data.models.includes(modelWidget.value)) modelWidget.value = data.models[0];
-                    refresh.name = `刷新在线模型（${data.models.length}）`;
+                    refresh.name = `Refresh Online Models (${data.models.length})`;
                 } catch (error) {
                     refresh.name = oldLabel;
                     alert(`获取在线模型失败：${error.message}`);

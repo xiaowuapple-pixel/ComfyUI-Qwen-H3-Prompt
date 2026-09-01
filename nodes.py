@@ -108,6 +108,14 @@ GENERATION_TYPE_INSTRUCTIONS = {
     "尾帧生成": "按尾帧生成处理：最后一张参考图作为目标尾帧，设计动作和镜头使视频自然收束到该画面。",
     "多参考生成": "按多参考生成处理：综合全部参考图片中的主体、场景、风格和细节，保持跨镜头一致，不擅自将图片解释为首帧或尾帧。",
 }
+GENERATION_TYPE_INSTRUCTIONS.update({
+    "Auto Detect": GENERATION_TYPE_INSTRUCTIONS["自动判别"],
+    "Text-to-Video": GENERATION_TYPE_INSTRUCTIONS["文生视频"],
+    "Image-to-Video": GENERATION_TYPE_INSTRUCTIONS["图生视频"],
+    "First/Last Frame": GENERATION_TYPE_INSTRUCTIONS["首尾帧生成"],
+    "Last Frame": GENERATION_TYPE_INSTRUCTIONS["尾帧生成"],
+    "Multi-Reference": GENERATION_TYPE_INSTRUCTIONS["多参考生成"],
+})
 
 CREATIVE_SKILL_INSTRUCTIONS = {
     "自动判别": "根据用户描述和参考图片，自动选择最适合的创作技能，并保持 H3 提示词格式完整。",
@@ -121,6 +129,18 @@ CREATIVE_SKILL_INSTRUCTIONS = {
     "纸张拼贴科普": "采用纸张拼贴科普技能：用纸张、剪纸、拼贴和手工材质表达知识点，保持层次清楚、动作连续且易于理解。",
     "纸艺定格科普": "采用纸艺定格科普技能：设计纸艺角色和场景的逐格运动、手工纹理、镜头节奏，并把知识讲解转化为可视化动作。",
 }
+CREATIVE_SKILL_INSTRUCTIONS.update({
+    "Auto Detect": CREATIVE_SKILL_INSTRUCTIONS["自动判别"],
+    "General H3 Prompt": CREATIVE_SKILL_INSTRUCTIONS["通用 H3 提示词"],
+    "3D Animated Short": CREATIVE_SKILL_INSTRUCTIONS["3D 动画短片"],
+    "Brand Promo": CREATIVE_SKILL_INSTRUCTIONS["品牌宣传片"],
+    "Co-op Game Intro": CREATIVE_SKILL_INSTRUCTIONS["合作游戏片头"],
+    "Hand-drawn Live Action": CREATIVE_SKILL_INSTRUCTIONS["手绘实拍融合"],
+    "Minimalist Product Ad": CREATIVE_SKILL_INSTRUCTIONS["极简产品广告"],
+    "Music Subtitle Video": CREATIVE_SKILL_INSTRUCTIONS["音乐字幕视频"],
+    "Paper Collage Explainer": CREATIVE_SKILL_INSTRUCTIONS["纸张拼贴科普"],
+    "Papercraft Stop-motion Explainer": CREATIVE_SKILL_INSTRUCTIONS["纸艺定格科普"],
+})
 
 OFFICIAL_SKILL_PATHS = {
     "通用 H3 提示词": "h3-prompt-writing",
@@ -596,14 +616,14 @@ class Qwen36MultiImageH3ChinesePrompt:
                 "Online API Key": ("STRING", {"default": "", "multiline": False, "password": True}),
                 "Online Model": ("STRING", {"default": "", "multiline": False, "placeholder": "Click refresh to load models"}),
                 "Generation Type": (
-                    ["自动判别", "文生视频", "图生视频", "首尾帧生成", "尾帧生成", "多参考生成"],
-                    {"default": "自动判别"},
+                    ["Auto Detect", "Text-to-Video", "Image-to-Video", "First/Last Frame", "Last Frame", "Multi-Reference"],
+                    {"default": "Auto Detect"},
                 ),
                 "Output Chinese Prompt": ("BOOLEAN", {"default": False}),
                 "Creative Skill": (
                     [
-                        "自动判别", "通用 H3 提示词", "3D 动画短片", "品牌宣传片", "合作游戏片头",
-                        "手绘实拍融合", "极简产品广告", "音乐字幕视频", "纸张拼贴科普", "纸艺定格科普",
+                        "Auto Detect", "General H3 Prompt", "3D Animated Short", "Brand Promo", "Co-op Game Intro",
+                        "Hand-drawn Live Action", "Minimalist Product Ad", "Music Subtitle Video", "Paper Collage Explainer", "Papercraft Stop-motion Explainer",
                     ],
                     {"default": "自动判别"},
                 ),
@@ -624,23 +644,23 @@ class Qwen36MultiImageH3ChinesePrompt:
         vision_name = _input_value(inputs, "Vision Model", "视觉模型")
         gpu_layers = _input_value(inputs, "GPU Offload Layers", "GPU卸载层数", -1)
         seed = _input_value(inputs, "Seed", "种子", 0)
-        generation_type = _input_value(inputs, "Generation Type", "生成类型", "自动判别")
+        generation_type = _input_value(inputs, "Generation Type", "生成类型", "Auto Detect")
         if not online_source and (model_name == "未找到语言模型" or vision_name == "未找到视觉模型"):
             raise FileNotFoundError("请将 GGUF 语言模型和对应 mmproj 视觉模型放入 models/LLM。")
-        images = _collect_images(inputs, allow_empty=generation_type in {"自动判别", "文生视频"})
+        images = _collect_images(inputs, allow_empty=generation_type in {"自动判别", "文生视频", "Auto Detect", "Text-to-Video"})
         # With no reference image, automatic mode is a true text-to-video task.
-        if not images and generation_type == "自动判别":
-            generation_type = "文生视频"
-        if generation_type in {"图生视频", "首尾帧生成", "尾帧生成", "多参考生成"} and not images:
+        if not images and generation_type in {"自动判别", "Auto Detect"}:
+            generation_type = "Text-to-Video"
+        if generation_type in {"图生视频", "首尾帧生成", "尾帧生成", "多参考生成", "Image-to-Video", "First/Last Frame", "Last Frame", "Multi-Reference"} and not images:
             raise ValueError(f"生成类型“{generation_type}”至少需要输入一张参考图片。")
-        if generation_type == "首尾帧生成" and len(images) < 2:
+        if generation_type in {"首尾帧生成", "First/Last Frame"} and len(images) < 2:
             raise ValueError("首尾帧生成至少需要输入两张图片，分别作为首帧和尾帧。")
         duration = _input_value(inputs, "Video Duration", "视频时长", 10.0)
         aspect_ratio = _input_value(inputs, "Aspect Ratio", "画面比例", "16:9")
         generation_instruction = GENERATION_TYPE_INSTRUCTIONS.get(
             generation_type, GENERATION_TYPE_INSTRUCTIONS["自动判别"]
         )
-        creative_skill = _input_value(inputs, "Creative Skill", "创意技能", "自动判别")
+        creative_skill = _input_value(inputs, "Creative Skill", "创意技能", "Auto Detect")
         creative_instruction = _official_skill_instruction(creative_skill)
         unload_after_generation = bool(_input_value(inputs, "Unload Model After Generation", "生成后卸载模型", True))
         output_chinese = bool(_input_value(inputs, "Output Chinese Prompt", "输出中文提示词", False))
