@@ -157,6 +157,14 @@ def _is_online_source(value):
     return bool(value)
 
 
+def _input_value(inputs, name, legacy_name=None, default=None):
+    if name in inputs:
+        return inputs[name]
+    if legacy_name and legacy_name in inputs:
+        return inputs[legacy_name]
+    return default
+
+
 def _llm_directories():
     try:
         roots = folder_paths.get_folder_paths("LLM")
@@ -357,7 +365,7 @@ def _tensor_to_data_url(tensor, max_size=512):
 def _collect_images(inputs, allow_empty=False):
     images = []
     for index in range(1, 10):
-        tensor = inputs.get(f"图片_{index}")
+        tensor = inputs.get(f"Reference Image {index}", inputs.get(f"图片_{index}"))
         if tensor is None:
             continue
         if tensor.ndim == 3:
@@ -544,9 +552,9 @@ class Qwen36MultiImageH3ChinesePrompt:
         vision_models = _vision_models() or ["未找到视觉模型"]
         return {
             "required": {
-                "语言模型": (models,),
-                "视觉模型": (vision_models,),
-                "GPU卸载层数": (
+                "Language Model": (models,),
+                "Vision Model": (vision_models,),
+                "GPU Offload Layers": (
                     "INT",
                     {
                         "default": -1,
@@ -556,7 +564,7 @@ class Qwen36MultiImageH3ChinesePrompt:
                         "tooltip": "-1=全部放入显存，0=全部使用内存/CPU。16GB 显存建议从 16-24 开始。",
                     },
                 ),
-                "种子": (
+                "Seed": (
                     "INT",
                     {
                         "default": 0,
@@ -567,7 +575,7 @@ class Qwen36MultiImageH3ChinesePrompt:
                         "tooltip": "可在生成后控制中选择随机、递增或固定。",
                     },
                 ),
-                "简单描述": (
+                "Description": (
                     "STRING",
                     {
                         "default": "",
@@ -575,48 +583,48 @@ class Qwen36MultiImageH3ChinesePrompt:
                         "placeholder": "简单说明想要的情节、动作、运镜或声音。",
                     },
                 ),
-                "视频时长": (
+                "Video Duration": (
                     "FLOAT",
                     {"default": 10.0, "min": 1.0, "max": 30.0, "step": 0.5},
                 ),
-                "画面比例": (
+                "Aspect Ratio": (
                     ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"],
                     {"default": "16:9"},
                 ),
-                "模型来源": ("BOOLEAN", {"default": False, "label_on": "线上 LLM", "label_off": "本地模型"}),
-                "在线请求地址": ("STRING", {"default": "https://api.openai.com/v1", "multiline": False}),
-                "在线APIKey": ("STRING", {"default": "", "multiline": False, "password": True}),
-                "在线模型": ("STRING", {"default": "", "multiline": False, "placeholder": "留空自动从 /models 选择第一个"}),
-                "生成类型": (
+                "Model Source": ("BOOLEAN", {"default": False, "label_on": "Online LLM", "label_off": "Local Model"}),
+                "Online Request URL": ("STRING", {"default": "https://api.openai.com/v1", "multiline": False}),
+                "Online API Key": ("STRING", {"default": "", "multiline": False, "password": True}),
+                "Online Model": ("STRING", {"default": "", "multiline": False, "placeholder": "Click refresh to load models"}),
+                "Generation Type": (
                     ["自动判别", "文生视频", "图生视频", "首尾帧生成", "尾帧生成", "多参考生成"],
                     {"default": "自动判别"},
                 ),
-                "输出中文提示词": ("BOOLEAN", {"default": False}),
-                "创意技能": (
+                "Output Chinese Prompt": ("BOOLEAN", {"default": False}),
+                "Creative Skill": (
                     [
                         "自动判别", "通用 H3 提示词", "3D 动画短片", "品牌宣传片", "合作游戏片头",
                         "手绘实拍融合", "极简产品广告", "音乐字幕视频", "纸张拼贴科普", "纸艺定格科普",
                     ],
                     {"default": "自动判别"},
                 ),
-                "生成后卸载模型": ("BOOLEAN", {"default": True}),
+                "Unload Model After Generation": ("BOOLEAN", {"default": True}),
             },
-            "optional": {f"图片_{index}": ("IMAGE",) for index in range(1, 10)},
+            "optional": {f"Reference Image {index}": ("IMAGE",) for index in range(1, 10)},
         }
 
     RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("H3中文提示词",)
+    RETURN_NAMES = ("H3 Prompt",)
     FUNCTION = "生成"
-    CATEGORY = "MiniMax H3/中文提示词"
-    DESCRIPTION = "自行搭配 GGUF 语言模型和 mmproj 视觉模型，生成 MiniMax H3 中文提示词。"
+    CATEGORY = "MiniMax H3/Prompt"
+    DESCRIPTION = "Generate MiniMax H3 prompts with local GGUF or online vision-language models."
 
     def 生成(self, **inputs):
-        online_source = _is_online_source(inputs["模型来源"])
-        model_name = inputs["语言模型"]
-        vision_name = inputs["视觉模型"]
-        gpu_layers = inputs["GPU卸载层数"]
-        seed = inputs["种子"]
-        generation_type = inputs.get("生成类型", "自动判别")
+        online_source = _is_online_source(_input_value(inputs, "Model Source", "模型来源", False))
+        model_name = _input_value(inputs, "Language Model", "语言模型")
+        vision_name = _input_value(inputs, "Vision Model", "视觉模型")
+        gpu_layers = _input_value(inputs, "GPU Offload Layers", "GPU卸载层数", -1)
+        seed = _input_value(inputs, "Seed", "种子", 0)
+        generation_type = _input_value(inputs, "Generation Type", "生成类型", "自动判别")
         if not online_source and (model_name == "未找到语言模型" or vision_name == "未找到视觉模型"):
             raise FileNotFoundError("请将 GGUF 语言模型和对应 mmproj 视觉模型放入 models/LLM。")
         images = _collect_images(inputs, allow_empty=generation_type in {"自动判别", "文生视频"})
@@ -627,21 +635,21 @@ class Qwen36MultiImageH3ChinesePrompt:
             raise ValueError(f"生成类型“{generation_type}”至少需要输入一张参考图片。")
         if generation_type == "首尾帧生成" and len(images) < 2:
             raise ValueError("首尾帧生成至少需要输入两张图片，分别作为首帧和尾帧。")
-        duration = inputs["视频时长"]
-        aspect_ratio = inputs["画面比例"]
+        duration = _input_value(inputs, "Video Duration", "视频时长", 10.0)
+        aspect_ratio = _input_value(inputs, "Aspect Ratio", "画面比例", "16:9")
         generation_instruction = GENERATION_TYPE_INSTRUCTIONS.get(
             generation_type, GENERATION_TYPE_INSTRUCTIONS["自动判别"]
         )
-        creative_skill = inputs.get("创意技能", "自动判别")
+        creative_skill = _input_value(inputs, "Creative Skill", "创意技能", "自动判别")
         creative_instruction = _official_skill_instruction(creative_skill)
-        unload_after_generation = bool(inputs.get("生成后卸载模型", True))
-        output_chinese = bool(inputs.get("输出中文提示词", False))
+        unload_after_generation = bool(_input_value(inputs, "Unload Model After Generation", "生成后卸载模型", True))
+        output_chinese = bool(_input_value(inputs, "Output Chinese Prompt", "输出中文提示词", False))
         language_instruction = (
             "输出必须使用简体中文（官方字段名和格式标记保持不变）。"
             if output_chinese
             else "输出必须使用英文（官方字段名和格式标记保持不变）；不要翻译字段名。"
         )
-        description = inputs["简单描述"].strip() or (
+        description = _input_value(inputs, "Description", "简单描述", "").strip() or (
             "根据文字描述创作连贯、自然、有电影感的视频。" if not images
             else "根据参考图片创作连贯、自然、有电影感的视频。"
         )
@@ -665,9 +673,14 @@ class Qwen36MultiImageH3ChinesePrompt:
             )
 
         if online_source:
-            if not inputs["在线APIKey"].strip():
+            api_key = _input_value(inputs, "Online API Key", "在线APIKey", "")
+            if not api_key.strip():
                 raise ValueError("在线模式必须填写 API Key。")
-            llm = _OnlineRuntime(inputs["在线请求地址"], inputs["在线APIKey"], inputs["在线模型"])
+            llm = _OnlineRuntime(
+                _input_value(inputs, "Online Request URL", "在线请求地址", ""),
+                api_key,
+                _input_value(inputs, "Online Model", "在线模型", ""),
+            )
         else:
             llm = _VisionRuntime.load(model_name, vision_name, gpu_layers)
         try:

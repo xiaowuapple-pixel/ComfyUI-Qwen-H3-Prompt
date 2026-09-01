@@ -11,9 +11,9 @@ app.registerExtension({
         const originalCreated = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function () {
             const result = originalCreated?.apply(this, arguments);
-            const addressWidget = this.widgets?.find((widget) => widget.name === "在线请求地址");
-            const keyWidget = this.widgets?.find((widget) => widget.name === "在线APIKey");
-            const modelWidget = this.widgets?.find((widget) => widget.name === "在线模型");
+            const addressWidget = this.widgets?.find((widget) => widget.name === "Online Request URL");
+            const keyWidget = this.widgets?.find((widget) => widget.name === "Online API Key");
+            const modelWidget = this.widgets?.find((widget) => widget.name === "Online Model");
             if (!addressWidget || !keyWidget || !modelWidget) return result;
 
             const savedModel = modelWidget.value || "";
