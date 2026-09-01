@@ -69,5 +69,33 @@ app.registerExtension({
             this.setSize(this.computeSize());
             return result;
         };
+
+        const originalConfigure = nodeType.prototype.onConfigure;
+        nodeType.prototype.onConfigure = function (info) {
+            const result = originalConfigure?.apply(this, arguments);
+            const legacyValues = {
+                "自动判别": "Auto Detect",
+                "通用 H3 提示词": "General H3 Prompt",
+                "3D 动画短片": "3D Animated Short",
+                "品牌宣传片": "Brand Promo",
+                "合作游戏片头": "Co-op Game Intro",
+                "手绘实拍融合": "Hand-drawn Live Action",
+                "极简产品广告": "Minimalist Product Ad",
+                "音乐字幕视频": "Music Subtitle Video",
+                "纸张拼贴科普": "Paper Collage Explainer",
+                "纸艺定格科普": "Papercraft Stop-motion Explainer",
+                "文生视频": "Text-to-Video",
+                "图生视频": "Image-to-Video",
+                "首尾帧生成": "First/Last Frame",
+                "尾帧生成": "Last Frame",
+                "多参考生成": "Multi-Reference",
+            };
+            for (const widget of this.widgets || []) {
+                if ((widget.name === "Creative Skill" || widget.name === "Generation Type") && legacyValues[widget.value]) {
+                    widget.value = legacyValues[widget.value];
+                }
+            }
+            return result;
+        };
     },
 });
