@@ -65,9 +65,9 @@ non_diegetic_music:
    [Shot 1] 不写时间戳；后续镜头必须使用 [Shot N] At MM:SS.mmm, 标明切换时间。
 6. 镜头时间线必须严格适配用户指定的总时长。具体描述构图、主体动作、表情、动作连续性、
    景别、机位、运镜幅度与速度、光线、环境变化和声音同步，避免物理上互相冲突的动作。
-7. detailed_description 是输出主体，通常写成约 800 至 1400 个汉字，不能只是剧情摘要。每个镜头
-   都要明确写出：当前构图和景别、主体外貌与画面位置、环境与照明、连续动作及状态变化、运镜
-   类型/方向/幅度/速度、当下环境声或物理音效、参考内容在何处生效。即使只有一个镜头也不能省略。
+7. detailed_description 是输出主体，长度以能清楚表达完整动作和镜头为准，通常约 250 至 800 个汉字，
+   不要为了凑字数强行增加镜头或重复描述。每个镜头明确交代必要的构图、主体动作、环境、运镜和声音；
+   短视频可以只有一个镜头。
 8. 有真实对白时，按首次发声顺序分配稳定的 (S1)、(S2) 编号，并使用
    <d>[Chinese]对白原文</d>。用户没有要求对白时不要擅自添加。
 9. overall_soundscape 只总结环境声和物理音效，不重复对白，也不写观众才能听见的配乐。
@@ -496,9 +496,9 @@ def _replace_section(text, section, replacement):
 def _detail_is_short(text, duration):
     details = _section_text(text, "detailed_description")
     chinese_count = len(re.findall(r"[\u4e00-\u9fff]", details))
-    target = max(600, min(1200, round(float(duration) * 75)))
+    target = max(180, min(700, round(float(duration) * 45)))
     shots = len(re.findall(r"\[Shot\s+\d+\]", details, flags=re.IGNORECASE))
-    minimum_shots = 2 if duration <= 5 else 3 if duration <= 10 else 4
+    minimum_shots = 1 if duration <= 6 else 2 if duration <= 15 else 3
     return chinese_count < target or shots < minimum_shots
 
 
@@ -514,12 +514,12 @@ def _quality_errors(text, duration):
     soundscape = _section_text(text, "overall_soundscape")
 
     chinese_count = len(re.findall(r"[\u4e00-\u9fff]", details))
-    minimum_chinese = max(600, min(1200, round(float(duration) * 75)))
+    minimum_chinese = max(180, min(700, round(float(duration) * 45)))
     if chinese_count < minimum_chinese:
         errors.append(f"detailed_description 只有约 {chinese_count} 个汉字，至少需要 {minimum_chinese} 个")
 
     shot_count = len(re.findall(r"\[Shot\s+\d+\]", details, flags=re.IGNORECASE))
-    minimum_shots = 2 if duration <= 5 else 3 if duration <= 10 else 4
+    minimum_shots = 1 if duration <= 6 else 2 if duration <= 15 else 3
     if shot_count < minimum_shots:
         errors.append(f"只有 {shot_count} 个镜头，当前时长至少需要 {minimum_shots} 个有明确分工的镜头")
 
@@ -725,6 +725,7 @@ class Qwen36MultiImageH3ChinesePrompt:
                 f"指定生成类型：{generation_type}\n生成类型要求：{generation_instruction}\n"
                 f"指定创意技能：{creative_skill}\n创意技能要求：{creative_instruction}\n"
                 f"用户的简单描述：{description}\n\n"
+                "长度原则：以清楚表达用户需求为准，保持自然、适中的篇幅；不要为了满足字数、镜头数量或技能模板而强行扩写、堆砌细节或重复内容。\n\n"
                 "下面是已经根据全部参考图片完成的内部视觉分析和分镜策划。充分使用其中的具体视觉细节，"
                 "但不要在最终输出中提及‘分析’或‘资料’：\n\n"
                 f"{visual_plan}\n\n"
@@ -752,7 +753,7 @@ class Qwen36MultiImageH3ChinesePrompt:
                     "这通常是 Uncensored 微调模型的指令遵循问题，请更换 Instruct 模型或更换种子。"
                 )
             prompt = _normalize_sections(prompt)
-            if _detail_is_short(prompt, duration):
+            if _detail_is_short(prompt, duration) and len(_section_text(prompt, "detailed_description")) < 120:
                 expansion_request = (
                     "只重写下面两个字段：retention_analysis 和 detailed_description。"
                     "不要输出其他字段、解释、Markdown 或内部分析。\n\n"
@@ -760,11 +761,9 @@ class Qwen36MultiImageH3ChinesePrompt:
                     "并严格使用 fully_preserved、partially_preserved、attribute_transfer 或 weak_reference，"
                     "格式为：<Subject 1> (appears in [Shot 1], [Shot 2]): fully_preserved - 中文具体说明。"
                     "禁止 [P1]、箭头、百分比或数字列表。\n\n"
-                    f"detailed_description 必须写 {max(600, min(1200, round(duration * 75)))} 至 1200 个中文汉字，"
-                    f"为 {duration:g} 秒视频设计至少 {2 if duration <= 5 else 3 if duration <= 10 else 4} 个镜头。"
-                    "[Shot 1] 不带时间；后续使用 [Shot N] At MM:SS.mmm,。每个镜头必须包含构图景别、"
-                    "主体位置与连续动作、表情状态变化、环境与光线、运镜方向/幅度/速度、同步环境声或物理音效。"
-                    "不得重复同一句或用近义句凑字数。\n\n"
+                    f"detailed_description 写到约 {max(180, min(700, round(duration * 45)))} 个中文汉字即可，"
+                    f"为 {duration:g} 秒视频安排自然数量的镜头（通常 1-3 个）。"
+                    "只补充必要的构图、动作、环境、运镜和声音，不要为了长度重复或过度复杂化。\n\n"
                     f"目标画幅：{aspect_ratio}\n用户描述：{description}\n\n"
                     f"视觉资料：\n{visual_plan}\n\n"
                     f"主体定义：\n{_section_text(prompt, 'subject_definitions')}\n\n"
